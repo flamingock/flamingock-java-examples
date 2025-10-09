@@ -1,0 +1,39 @@
+{
+  "type": "record",
+  "name": "OrderCreated",
+  "namespace": "io.flamingock.examples.inventory.events",
+  "doc": "Event published when a new order is created - Version 2 with discount support",
+  "fields": [
+    {
+      "name": "orderId",
+      "type": "string",
+      "doc": "Unique identifier for the order"
+    },
+    {
+      "name": "customerId",
+      "type": "string",
+      "doc": "Identifier of the customer who placed the order"
+    },
+    {
+      "name": "total",
+      "type": "double",
+      "doc": "Total amount of the order"
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "doc": "Current status of the order"
+    },
+    {
+      "name": "createdAt",
+      "type": "string",
+      "doc": "Timestamp when the order was created"
+    },
+    {
+      "name": "discountCode",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Discount code applied to the order (nullable for backward compatibility)"
+    }
+  ]
+}

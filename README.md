@@ -37,8 +37,9 @@ But you can also  run it with your own infrastructure.
 
 ## Index of Examples
 
-| **Example Project**                                            | **Description**                                                                                                                                           |
-|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Example Project**                                                | **Description**                                                                                                                                                                                            |
+|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **[inventory-orders-service](inventory-orders-service/README.md)** | Example that simulates an **e-commerce service** that manages inventory and orders. It demonstrates how Flamingock coordinates multiple target systems in lockstep using the **Change-as-Code** approach.  |
 > 🚀 **New examples will be added regularly!** Stay tuned for updates as we expand the repository to cover even more
 > systems and frameworks.
 

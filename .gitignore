@@ -43,3 +43,6 @@ bin/
 ### Mac OS ###
 .DS_Store
 /graalvm/graalvm-0.0.1-SNAPSHOT
+
+### Claude ###
+.claude/
