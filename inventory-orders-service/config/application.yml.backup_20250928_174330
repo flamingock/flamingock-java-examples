@@ -1,0 +1,24 @@
+application:
+  name: Inventory & Orders Service
+  version: 1.0.0
+  environment: development
+database:
+  host: localhost
+  port: 27017
+  name: inventory
+kafka:
+  bootstrap.servers: localhost:9092
+  schema.registry.url: http://localhost:8081
+metadata:
+  createdAt: 2024-01-01T00:00:00Z
+  createdBy: flamingock-init
+  description: Initial configuration file for Inventory & Orders Service
+features:
+  discounts:
+    enabled: false
+    defaultCode: NONE
+    validCodes:
+    - SUMMER10
+    - WELCOME15
+    - LOYAL20
+    maxDiscountPercent: 20
