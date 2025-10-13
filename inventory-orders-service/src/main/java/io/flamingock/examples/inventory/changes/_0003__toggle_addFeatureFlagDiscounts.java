@@ -26,7 +26,7 @@ import static io.flamingock.examples.inventory.util.TargetSystems.FEATURE_FLAG_T
 
 @TargetSystem(id = FEATURE_FLAG_TARGET_SYSTEM)
 @Change(id = "add-feature-flag-discounts", author = "flamingock-team", transactional = false)
-public class _0003___toggle_addFeatureFlagDiscounts {
+public class _0003__toggle_addFeatureFlagDiscounts {
 
     @Apply
     public void apply(LaunchDarklyClient launchDarkly) throws Exception {
