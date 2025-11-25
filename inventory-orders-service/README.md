@@ -67,6 +67,9 @@ This example showcases Flamingock’s ability to:
 - [Prerequisites](#prerequisites)
 - [Dependencies](#dependencies)
 - [How to Run this Example](#how-to-run-this-example)
+   - [Option 1: Run the Application (Recommended)](#option-1-run-the-application-recommended)
+   - [Option 2: Run Tests](#option-2-run-tests)
+   - [Option 3: Run with GraalVM Native Image (Optional)](#option-3-run-with-graalvm-native-image-optional)
 - [Proven Functionalities](#proven-functionalities)
 - [Implemented Changes](#implemented-changes)
 - [Contributing](#contributing)
@@ -210,6 +213,71 @@ Run the integration tests with Testcontainers (no Docker Compose needed):
 ```bash
 ./gradlew test
 ```
+
+### Option 3: Run with GraalVM Native Image (Optional)
+
+If you want to showcase Flamingock running as a GraalVM native image, you can follow these **optional** steps. The regular JVM flow above still works as-is.
+
+For full details, see the official docs: https://docs.flamingock.io/frameworks/graalvm
+
+#### 1. Use a GraalVM Java distribution
+
+Using SDKMAN:
+
+```bash
+sdk env install   # uses .sdkmanrc in this folder
+sdk use java 22.0.2-graalce  # or any installed GraalVM distribution compatible with your setup
+```
+
+The default `.sdkmanrc` keeps Java 17, but includes a commented example GraalVM version you can enable.
+
+#### 2. Ensure GraalVM support dependencies are present
+
+This example already includes the Flamingock GraalVM integration and resource configuration:
+
+- `build.gradle.kts` contains:
+   - `implementation("io.flamingock:flamingock-graalvm:$flamingockVersion")`
+- `resource-config.json` in the project root includes:
+   - `META-INF/flamingock/metadata.json` resources required at native-image time
+
+If you copy this example to your own project, make sure you add the same pieces (or follow the docs linked above).
+
+#### 3. Build the fat JAR
+
+First build the application as usual:
+
+```bash
+./gradlew clean build
+```
+
+This generates a runnable JAR under `build/libs/` (for example `build/libs/inventory-orders-service-1.0-SNAPSHOT.jar`).
+
+#### 4. Create the native image
+
+From the project root, run (adjust the JAR name and output binary name if needed):
+
+```bash
+native-image \
+   --no-fallback \
+   --features=io.flamingock.graalvm.RegistrationFeature \
+   -H:ResourceConfigurationFiles=resource-config.json \
+   -H:+ReportExceptionStackTraces \
+   --initialize-at-build-time=org.slf4j.simple \
+   -jar build/libs/inventory-orders-service-1.0-SNAPSHOT.jar \
+   inventory-orders-service
+```
+
+This uses Flamingock's GraalVM feature to automatically register all required reflection metadata.
+
+#### 5. Run the native image
+
+With Docker Compose infrastructure already running (see [Option 1](#option-1-run-the-application-recommended)), start the native binary:
+
+```bash
+./inventory-orders-service
+```
+
+The application will execute the same Flamingock migrations as when running on the regular JVM, but with GraalVM-native startup and footprint characteristics.
 
 ## Troubleshooting
 

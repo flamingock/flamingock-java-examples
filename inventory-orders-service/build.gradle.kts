@@ -26,7 +26,7 @@ repositories {
 group = "io.flamingock"
 version = "1.0-SNAPSHOT"
 
-val flamingockVersion = "1.0.0-beta.1"
+val flamingockVersion = "1.0.0-beta.3"
 logger.lifecycle("Building with flamingock version: $flamingockVersion")
 
 val mongodbVersion = "5.5.1"
@@ -39,6 +39,10 @@ dependencies {
 //    Flamingock Dependencies
     implementation(platform("io.flamingock:flamingock-community-bom:$flamingockVersion"))
     implementation("io.flamingock:flamingock-community")
+    // Optional: enable GraalVM native image support for Flamingock
+    // See: https://docs.flamingock.io/frameworks/graalvm
+    // Uncomment
+     implementation("io.flamingock:flamingock-graalvm:$flamingockVersion")
     annotationProcessor("io.flamingock:flamingock-processor:$flamingockVersion")
 
 //    MongoDB dependencies
@@ -71,6 +75,12 @@ dependencies {
 
 application {
     mainClass = "io.flamingock.examples.inventory.InventoryOrdersApp"
+}
+
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes["Main-Class"] = application.mainClass
+    }
 }
 
 tasks.withType<JavaCompile> {
