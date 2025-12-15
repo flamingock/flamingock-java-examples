@@ -9,15 +9,15 @@ ___
 
 This example simulates an **e-commerce service** that manages inventory and orders. It demonstrates how Flamingock coordinates multiple target systems in lockstep using the **Change-as-Code** approach.
 
-The story begins when the **marketing team** launches a promotional campaign that requires support for **discount codes**.  
+The story begins when the **marketing team** launches a promotional campaign that requires support for **discount codes**.
 To implement this feature safely, the product and engineering teams plan a sequence of deployments, each introducing incremental changes in a controlled, auditable way.
 
-As development progresses, the **sales team** also requests the ability to quickly search and report on orders by discount code.  
+As development progresses, the **sales team** also requests the ability to quickly search and report on orders by discount code.
 This leads the engineers to add an index on the new field as part of the rollout, ensuring the system remains both functional and performant.
 
 ### Lifecycle of the feature rollout
 
-1. **Initial deployment**  <a id="initial-deployment"></a>  
+1. **Initial deployment**  <a id="initial-deployment"></a>
    *Business driver:* prepare the system for discounts while keeping the feature hidden.
    - Add the `discountCode` field to the `orders` collection in **MongoDB**.
    - Update the `OrderCreated` schema in **Kafka** to include the same field.
@@ -28,7 +28,7 @@ This leads the engineers to add an index on the new field as part of the rollout
       - [`UpdateOrderCreatedSchema`](#updateordercreatedschema)
       - [`AddFeatureFlagDiscounts`](#addfeatureflagdiscounts)
 
-2. **Second deployment** <a id="second-deployment"></a>  
+2. **Second deployment** <a id="second-deployment"></a>
    *Business driver:* ensure existing and new orders remain consistent.
    - Backfill existing orders with a default `discountCode` (e.g. `"NONE"`).
    - Application logic begins to populate the field for new orders, still hidden behind the flag.
@@ -37,7 +37,7 @@ This leads the engineers to add an index on the new field as part of the rollout
       - [`BackfillDiscountsForExistingOrders`](#backfilldiscountsforexistingorders)
       - [`AddIndexOnDiscountCode`](#addindexondiscountcode)
 
-3. **Runtime activation (no deployment)** <a id="runtime-activation"></a>  
+3. **Runtime activation (no deployment)** <a id="runtime-activation"></a>
    *Business driver:* marketing activates discounts for customers.
    - The feature flag is enabled at runtime using a feature-flag tool (e.g. Unleash, LaunchDarkly).
    - No redeployment is required — the system is already prepared.
@@ -67,6 +67,9 @@ This example showcases Flamingock’s ability to:
 - [Prerequisites](#prerequisites)
 - [Dependencies](#dependencies)
 - [How to Run this Example](#how-to-run-this-example)
+   - [Option 1: Run the Application (Recommended)](#option-1-run-the-application-recommended)
+   - [Option 2: Run Tests](#option-2-run-tests)
+   - [Option 3: Run with GraalVM Native Image (Optional)](#option-3-run-with-graalvm-native-image-optional)
 - [Proven Functionalities](#proven-functionalities)
 - [Implemented Changes](#implemented-changes)
 - [Contributing](#contributing)
@@ -211,6 +214,97 @@ Run the integration tests with Testcontainers (no Docker Compose needed):
 ./gradlew test
 ```
 
+### Option 3: Run with GraalVM Native Image (Optional)
+
+If you want to showcase Flamingock running as a GraalVM native image, you can follow these **optional** steps. The regular JVM flow above still works as-is.
+
+For full details, see the official docs: https://docs.flamingock.io/frameworks/graalvm
+
+#### 1. Use a GraalVM Java distribution
+
+Using SDKMAN:
+
+```bash
+sdk env install   # uses .sdkmanrc in this folder
+sdk use java 17.0.8-graal  # or any installed GraalVM distribution compatible with your setup
+```
+
+The default `.sdkmanrc` included with this example already uses Java 17 with GraalVM.
+
+#### 2. Ensure GraalVM support dependencies are present
+
+This example already includes the Flamingock GraalVM integration and resource configuration:
+
+- `build.gradle.kts` contains (commented):
+   - `implementation("io.flamingock:flamingock-graalvm:$flamingockVersion")`
+- `resource-config.json` in the project root includes:
+   - `META-INF/flamingock/metadata.json` resources required at native-image time
+
+If you copy this example to your own project, make sure you add the same pieces (or follow the docs linked above).
+
+#### 3. Build the fat (uber) JAR
+
+First build the application as usual, which also creates a **fat / uber JAR** bundling all runtime dependencies and a `Main-Class` manifest entry:
+
+```bash
+./gradlew clean build
+```
+
+The `jar` task in `build.gradle.kts` is configured like this:
+
+```kotlin
+tasks.named<Jar>("jar") {
+   manifest {
+      attributes["Main-Class"] = "io.flamingock.examples.inventory.InventoryOrdersApp"
+   }
+
+   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+   from(sourceSets.main.get().output)
+
+   from({
+      configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }
+   })
+}
+```
+
+This produces an executable uber JAR under `build/libs/` (for example `build/libs/inventory-orders-service-1.0-SNAPSHOT.jar`).
+
+> **Why this matters for GraalVM**
+>
+> GraalVM's `native-image -jar` mode expects a JAR that:
+> - has a valid `Main-Class` manifest attribute, and
+> - contains all the classes and dependencies reachable from that entry point.
+>
+> The fat/uber JAR configuration above ensures those requirements are met, which is essential for the native-image step to work reliably.
+
+#### 4. Create the native image
+
+From the project root, run (adjust the JAR name and output binary name if needed):
+
+```bash
+native-image \
+   --no-fallback \
+   --features=io.flamingock.graalvm.RegistrationFeature \
+   -H:ResourceConfigurationFiles=resource-config.json \
+   -H:+ReportExceptionStackTraces \
+   --initialize-at-build-time=org.slf4j.simple \
+   -jar build/libs/inventory-orders-service-1.0-SNAPSHOT.jar \
+   inventory-orders-service
+```
+
+This uses Flamingock's GraalVM feature to automatically register all required reflection metadata.
+
+#### 5. Run the native image
+
+With Docker Compose infrastructure already running (see [Option 1](#option-1-run-the-application-recommended)), start the native binary:
+
+```bash
+./inventory-orders-service
+```
+
+The application will execute the same Flamingock migrations as when running on the regular JVM, but with GraalVM-native startup and footprint characteristics.
+
 ## Troubleshooting
 
 ### Schema Registry Connection Issues
@@ -270,15 +364,15 @@ This example demonstrates the following Flamingock capabilities:
 ## Implemented Changes
 
 
-| Deployment Step                | Change Name                                                                         | Target Systems        | Operation                         | Description                                                                                  |  
-|--------------------------------|-------------------------------------------------------------------------------------|-----------------------|-----------------------------------|----------------------------------------------------------------------------------------------|  
-| [Initial](#initial-deployment) | <a id="adddiscountcodefieldtoorders"></a>`AddDiscountCodeFieldToOrders`             | MongoDB               | Alter collection / add field      | Adds `discountCode` (nullable) to the orders collection                                      |  
-| [Initial](#initial-deployment) | <a id="updateordercreatedschema"></a>`UpdateOrderCreatedSchema`                     | Kafka Schema Registry | Register new schema version       | Publishes a new version of the OrderCreated event schema including discountCode              |  
+| Deployment Step                | Change Name                                                                         | Target Systems        | Operation                         | Description                                                                                  |
+|--------------------------------|-------------------------------------------------------------------------------------|-----------------------|-----------------------------------|----------------------------------------------------------------------------------------------|
+| [Initial](#initial-deployment) | <a id="adddiscountcodefieldtoorders"></a>`AddDiscountCodeFieldToOrders`             | MongoDB               | Alter collection / add field      | Adds `discountCode` (nullable) to the orders collection                                      |
+| [Initial](#initial-deployment) | <a id="updateordercreatedschema"></a>`UpdateOrderCreatedSchema`                     | Kafka Schema Registry | Register new schema version       | Publishes a new version of the OrderCreated event schema including discountCode              |
 | [Initial](#initial-deployment) | <a id="addfeatureflagdiscounts"></a>`AddFeatureFlagDiscounts`                       | LaunchDarkly API       | Create flags                      | Creates feature flags for discount functionality using LaunchDarkly Management API           |
 | [Second](#second-deployment)   | <a id="backfilldiscountsforexistingorders"></a>`BackfillDiscountsForExistingOrders` | MongoDB               | Update                            | Updates existing orders with discountCode = "NONE"                                           |
 | [Second](#second-deployment)   | <a id="addindexondiscountcode"></a>`AddIndexOnDiscountCode`                         | MongoDB               | Create index                      | Creates an index on discountCode to support reporting and efficient lookups                  |
 | [Final](#final-deployment)     | <a id="cleanupfeatureflagdiscounts"></a>`CleanupFeatureFlagDiscounts`               | LaunchDarkly API       | Archive flags                     | Archives temporary feature flags once the feature is permanent and code guards are removed  |
-| [Final](#final-deployment)     | <a id="cleanupoldschemaversion"></a>`CleanupOldSchemaVersion`                       | Kafka Schema Registry | Disable/delete old schema version | Removes outdated schema once all consumers have migrated to the new version                  |  
+| [Final](#final-deployment)     | <a id="cleanupoldschemaversion"></a>`CleanupOldSchemaVersion`                       | Kafka Schema Registry | Disable/delete old schema version | Removes outdated schema once all consumers have migrated to the new version                  |
 
 ## Example Output
 

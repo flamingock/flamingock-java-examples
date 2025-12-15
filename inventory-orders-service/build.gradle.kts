@@ -26,7 +26,7 @@ repositories {
 group = "io.flamingock"
 version = "1.0-SNAPSHOT"
 
-val flamingockVersion = "1.0.0-beta.1"
+val flamingockVersion = "1.0.0-beta.4"
 logger.lifecycle("Building with flamingock version: $flamingockVersion")
 
 val mongodbVersion = "5.5.1"
@@ -39,6 +39,10 @@ dependencies {
 //    Flamingock Dependencies
     implementation(platform("io.flamingock:flamingock-community-bom:$flamingockVersion"))
     implementation("io.flamingock:flamingock-community")
+    // Optional: enable GraalVM native image support for Flamingock
+    // See: https://docs.flamingock.io/frameworks/graalvm
+    // Uncomment
+    // implementation("io.flamingock:flamingock-graalvm:$flamingockVersion")
     annotationProcessor("io.flamingock:flamingock-processor:$flamingockVersion")
 
 //    MongoDB dependencies
@@ -64,13 +68,27 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
 
-    testImplementation("org.testcontainers:mongodb:1.21.3")
-    testImplementation("org.testcontainers:kafka:1.21.3")
-    testImplementation("org.testcontainers:junit-jupiter:1.21.3")
+    testImplementation("org.testcontainers:testcontainers-mongodb:2.0.2")
+    testImplementation("org.testcontainers:testcontainers-kafka:2.0.2")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter:2.0.2")
 }
 
 application {
     mainClass = "io.flamingock.examples.inventory.InventoryOrdersApp"
+}
+
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes["Main-Class"] = "io.flamingock.examples.inventory.InventoryOrdersApp"
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from(sourceSets.main.get().output)
+
+    from({
+        configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }
+    })
 }
 
 tasks.withType<JavaCompile> {
