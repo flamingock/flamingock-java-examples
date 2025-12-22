@@ -1,6 +1,8 @@
 package io.flamingock.examples.inventory;
 
+import com.mongodb.client.MongoClient;
 import io.flamingock.community.mongodb.sync.driver.MongoDBSyncAuditStore;
+import io.flamingock.examples.inventory.util.MongoDBUtil;
 import io.flamingock.internal.core.store.CommunityAuditStore;
 import io.flamingock.targetsystem.nontransactional.NonTransactionalTargetSystem;
 import io.flamingock.targetystem.mongodb.sync.MongoDBSyncTargetSystem;
@@ -11,8 +13,13 @@ import org.springframework.context.annotation.Configuration;
 public class FlamingockConfig {
 
     @Bean
-    public MongoDBSyncTargetSystem mongoDBSyncTargetSystem() {
-        return TargetSystems.mongoDBSyncTargetSystem();
+    public MongoClient mongoClient() {
+        return MongoDBUtil.getMongoClient("mongodb://localhost:27017/");
+    }
+
+    @Bean
+    public MongoDBSyncTargetSystem mongoDBSyncTargetSystem(MongoClient mongoClient) {
+        return new MongoDBSyncTargetSystem(TargetSystems.MONGODB_TARGET_SYSTEM, mongoClient, TargetSystems.DATABASE_NAME);
     }
 
     @Bean
