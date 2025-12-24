@@ -18,10 +18,6 @@ package io.flamingock.examples.inventory;
 
 import io.flamingock.api.annotations.EnableFlamingock;
 import io.flamingock.api.annotations.Stage;
-import io.flamingock.community.Flamingock;
-import io.flamingock.community.mongodb.sync.driver.MongoDBSyncAuditStore;
-import io.flamingock.internal.core.store.CommunityAuditStore;
-import io.flamingock.targetystem.mongodb.sync.MongoDBSyncTargetSystem;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
