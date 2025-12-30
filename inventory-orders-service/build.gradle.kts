@@ -6,6 +6,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.4"
     id("io.flamingock") version "1.0.0-beta.8"
 }
+logger.lifecycle("Building with flamingock version: 1.0.0-beta.8")
 
 flamingock {
     community()
@@ -33,8 +34,6 @@ repositories {
 group = "io.flamingock"
 version = "1.0-SNAPSHOT"
 
-val flamingockVersion = "1.0.0-beta.8"
-logger.lifecycle("Building with flamingock version: $flamingockVersion")
 
 val mongodbVersion = "5.5.1"
 val kafkaVersion = "3.7.0"
